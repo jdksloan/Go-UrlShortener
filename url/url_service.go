@@ -23,7 +23,7 @@ type Url struct {
 }
 
 type ShortenedLink struct {
-	Result string
+	Result string `json:"result"`
 }
 
 type VisitResponse struct {
