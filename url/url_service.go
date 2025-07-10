@@ -26,6 +26,10 @@ type ShortenedLink struct {
 	Result string
 }
 
+type VisitResponse struct {
+	Visits int `json:"visits"`
+}
+
 func New(repository repository.Repository[Url], port string, redirectUrl string, apiPrefix string, apiVersion int) *Service {
 	return &Service{repository, port, redirectUrl, apiPrefix, apiVersion}
 }
@@ -93,6 +97,10 @@ func (s Service) handleUrlShorten(writer http.ResponseWriter, r *http.Request) {
 
 	shortLink := ShortenedLink{ret.Url}
 	err = json.NewEncoder(writer).Encode(shortLink)
+	if err != nil {
+		http.Error(writer, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s Service) handleUrlRedirect(writer http.ResponseWriter, r *http.Request) {
@@ -113,7 +121,6 @@ func (s Service) handleUrlRedirect(writer http.ResponseWriter, r *http.Request) 
 	}
 
 	http.Redirect(writer, r, byValue.Original, http.StatusFound)
-
 }
 
 func (s Service) handleStats(writer http.ResponseWriter, r *http.Request) {
@@ -131,6 +138,11 @@ func (s Service) handleStats(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(writer).Encode(map[string]int{"visits": res.Visits})
+	response := VisitResponse{Visits: res.Visits}
+
+	err = json.NewEncoder(writer).Encode(response)
+	if err != nil {
+		http.Error(writer, "Failed to encode response", http.StatusInternalServerError)
+	}
 
 }
